@@ -54,17 +54,44 @@ nav.navbar {
 	box-sizing: border-box;
 	padding: 0.5rem 1rem;
 
-}.project-list > .project-button:hover {
-	border: 0.1rem #d9d9d9 solid;
 }.project-list > .project-button > .header {
 	width: 100%;
 	height: min-content;
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
 }.project-list > .project-button > .header > h2.title {
 	font-size: 1.75rem;
 	font-weight: 600;
-	
+	color: #282827;
+
 	margin: 0;
 	padding: 0;
+
+	width: 100%;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}.project-list > .project-button > .header > button.menu {
+	border: none;
+	outline: none;
+
+	background: url(/items.svg);
+	height: 100%;
+
+	aspect-ratio: 1;
+	margin-left: 1rem;
+
+	opacity: 0.15;
+	cursor: pointer;
+	transition: all 0.1s ease-in-out;
+}.project-list > .project-button > .header > button.menu:hover {
+	opacity: 0.35;
+}
+
+.project-list > .project-button:hover {
+	border: 0.1rem #d9d9d9 solid;
 }
 
 /* Title bar */
