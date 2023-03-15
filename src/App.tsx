@@ -5,6 +5,7 @@ import "./styles.css";
 
 /* Components */
 import Navbar from "./molecules/Navbar";
+import Project from "./molecules/Project";
 
 /* Interfaces */
 interface Props {}
@@ -28,10 +29,25 @@ export default class App extends React.PureComponent<Props, State> {
 	/* Render */
 	render() {
 		return (
-			<div>
+			<div className="column">
 
-				{/* Navbar for enabling window-dragging */}
+				{/* [HEADERS] Navbar for enabling window-dragging */}
 				<Navbar />
+
+				{/* [BODY] */}
+				<main className="body">
+					<div className="title-bar">
+						<h1># My Quicknotes</h1>
+					</div>
+
+					<div className="project-list">
+						<Project />
+						<Project />
+						<Project />
+						<Project />
+						<Project />
+					</div>
+				</main>
 			</div>
 		);
 	};
