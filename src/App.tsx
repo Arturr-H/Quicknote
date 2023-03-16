@@ -41,30 +41,28 @@ export default class App extends React.PureComponent<Props, State> {
 
 	/* Render */
 	render() {
-		return (<>{
-			this.state.editor_open
+		return (
+			<div className="column">
+
+			{/* [HEADERS] Navbar for enabling window-dragging */}
+			<Navbar />
+			
+			{this.state.editor_open
 			? <Editor />
-			: <div className="column">
+			: <main className="body">
+				<div className="title-bar">
+					<h1># My Quicknotes</h1>
+				</div>
 
-				{/* [HEADERS] Navbar for enabling window-dragging */}
-				<Navbar />
-
-				{/* [BODY] */}
-				<main className="body">
-					<div className="title-bar">
-						<h1># My Quicknotes</h1>
-					</div>
-
-					{/* Links to projects */}
-					<div className="project-list">
-						<Project onOpen={this.openEditor} />
-						<Project onOpen={this.openEditor} />
-						<Project onOpen={this.openEditor} />
-						<Project onOpen={this.openEditor} />
-						<Project onOpen={this.openEditor} />
-					</div>
-				</main>
-			</div>
-		}</>);
+				{/* Links to projects */}
+				<div className="project-list">
+					<Project onOpen={this.openEditor} />
+					<Project onOpen={this.openEditor} />
+					<Project onOpen={this.openEditor} />
+					<Project onOpen={this.openEditor} />
+					<Project onOpen={this.openEditor} />
+				</div>
+			</main>
+		}</div>);
 	};
 }
