@@ -2,12 +2,21 @@
 import React, { RefObject } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import EditorItem from "../molecules/EditorItem";
+import PopupMenu from "../molecules/PopupMenu";
 
 /* Interfaces */
+interface Paragraph { content: string }
+interface Header1   { content: string }
+interface Header2   { content: string }
+
 interface Props {}
 interface State {
-    content_snippets: Array<[string, string]> // ID, Content
+    content_snippets: Array<[string, EditorContent]>, // ID, Content
+    popup_menu_active: boolean
 }
+
+/* Types */
+type EditorContent = Paragraph | Header1 | Header2;
 
 /* Main */
 export default class Editor extends React.PureComponent<Props, State> {
@@ -19,7 +28,8 @@ export default class Editor extends React.PureComponent<Props, State> {
 
 		/* State */
 		this.state = {
-            content_snippets: [["default-title", "## Welcome"]]
+            content_snippets: [["default-title", { content: "## Welcome" }]],
+            popup_menu_active: false
         };
 
         /* Bindings */
@@ -57,34 +67,51 @@ export default class Editor extends React.PureComponent<Props, State> {
                 <div className="content-snippets">
                     <EditorItem>
                         <textarea
-                        placeholder="Notes..."
+                            placeholder="Notes..."
                             onInput={(e) => {
                                 e.currentTarget.style.height = "";
                                 e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
                             }}
                             className="item-textarea"
-                            value={this.state.content_snippets[0][1]}
+                            value={this.state.content_snippets[0][1].content}
                             onChange={(e) => this.handleInput(e, "default-title")}
-                        ></textarea>
+                        />
                     </EditorItem>
                     {
                         this.state.content_snippets
                             .filter(e => e[0] !== "default-title")
-                            .map((e) => getElement(e, e[1], this.handleInput))
+                            .map((e) => getElement(e, e[1].content, this.handleInput))
                     }
                 </div>
+
+                {/*
+                    This button will show a popup menu where user can
+                    select what they want to append to their note page
+                */}
+                <button className="snippet-add-button">
+                    <div className="icon" />
+                </button>
+
+                {/* The "popup" menu */}
+                <PopupMenu
+                    active={this.state.popup_menu_active}
+                    buttons={[
+                        { label: "Text", icon: "/items.svg", function: () => {} },
+                        { label: "Text", icon: "/items.svg", function: () => {} }
+                    ]}
+                />
 			</div>
 		);
 	};
 }
 
 /* Create JSX element */
-function getElement(e: [string, string], value: string, input_handler: (e: any, id: string) => void) {
+function getElement(e: [string, EditorContent], value: string, input_handler: (e: any, id: string) => void) {
     return (
         <textarea
             key={e[0]}
             value={value}
-            onChange={(event) => input_handler(event, e[1])}
+            onChange={(event) => input_handler(event, e[1].content)}
         >
 
         </textarea>
