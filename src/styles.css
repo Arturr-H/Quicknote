@@ -9,6 +9,11 @@ html, body {
 	height: 100vh;
 
 	font-family: "Barlow", sans-serif;
+	-ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+
+	overflow-x: hidden;
+	overscroll-behavior-x: none;
 }
 main.body {
 	width: 100%;
@@ -16,9 +21,12 @@ main.body {
 
 	box-sizing: border-box;
 	padding: 1.5rem;
+
+	display: flex;
+	flex-direction: column;
 }
 nav.navbar {
-	height: 27.5px;
+	height: 47.5px;
 	width: 100%;
 }
 
@@ -88,10 +96,141 @@ nav.navbar {
 	transition: all 0.1s ease-in-out;
 }.project-list > .project-button > .header > button.menu:hover {
 	opacity: 0.35;
+}.project-list > .project-button:hover {
+	border: 0.1rem #d9d9d9 solid;
 }
 
-.project-list > .project-button:hover {
-	border: 0.1rem #d9d9d9 solid;
+/* Editor */
+.editor {
+	width: 100vw;
+	height: 100vh;
+
+	overflow: hidden;
+
+	box-sizing: border-box;
+	padding: 2rem 1rem;
+}.editor-item {
+	width: 100%;
+
+	display: flex;
+	flex-direction: row;
+}.editor-item > .sidebar {
+	height: 100%;
+	width: 3rem;
+
+	display: flex;
+	justify-content: center;
+
+	box-sizing: border-box;
+	padding-top: 0.5rem;
+}.editor-item > .sidebar > .rearrange-button {
+	width: 1.5rem;
+	height: 1.5rem;
+
+	background: url(/items.svg);
+	cursor: grab;
+	opacity: 0.2;
+}.editor-item > .width {
+	width: 100%;
+}.editor-item > .col > .body {
+	position: relative;
+	
+	width: 100%;
+	height: 100%;
+}
+
+/* Editor items */
+.item-textarea {
+	position: relative;
+	width: 100% !important;
+	height: 100%;
+
+	font-size: 1.25rem;
+	border: none;
+	outline: none;
+	background: none;
+	resize: none;
+
+	box-sizing: border-box;
+	padding: 0.5rem;
+	margin: 0;
+
+	font-family: "Barlow", sans-serif;
+	overflow: hidden;
+}
+
+/* Snippet add button */
+.snippet-add-button {
+	width: 5rem;
+	height: 5rem;
+
+	background: rgb(134, 201, 235);
+	position: fixed;
+
+	right: 1rem;
+	bottom: 1rem;
+
+	outline: none;
+	border: none;
+	border-radius: 0.5rem;
+	cursor: pointer;
+
+	transition: background 0.05s ease-in-out;
+
+	box-sizing: border-box;
+	padding: 1rem;
+}.snippet-add-button > .icon {
+	width: 100%;
+	height: 100%;
+
+	background: url(/items-white.svg);
+	user-select: none;
+	pointer-events: none;
+}.snippet-add-button:hover {
+	background: rgb(124, 193, 227);
+}
+
+/* Popup menu for selecting editor content */
+.popup-menu {
+	width: 12rem;
+
+	border: 0.1rem solid #e5e5e5;
+	border-radius: 0.5rem;
+
+	position: absolute;
+	right: 1rem;
+	bottom: 7rem;
+
+	transform: rotate(0deg);
+	transform-origin: bottom right;
+	overflow: hidden;
+}.popup-menu > .item {
+	height: 3rem;
+	width: 100%;
+
+	box-sizing: border-box;
+	padding: 0.75rem;
+
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.75rem;
+
+	cursor: pointer;
+	background: #fff;
+}.popup-menu > .item:hover {
+	background: #f5f5f5;
+}.popup-menu > .item > .icon {
+	height: 100%;
+	opacity: 0.2;
+}.popup-menu > .item > .label {
+	color: #282827;
+}.popup-menu > .hr {
+	width: calc(100% - 1.5rem);
+	height: 0.1rem;
+	background: #f5f5f5;
+
+	margin: 0 0.75rem;
 }
 
 /* Title bar */
