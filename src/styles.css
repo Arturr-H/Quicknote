@@ -14,6 +14,11 @@ html, body {
 
 	overflow-x: hidden;
 	overscroll-behavior-x: none;
+
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	    -ms-user-select: none;
+	        user-select: none;
 }
 main.body {
 	width: 100%;
@@ -110,19 +115,24 @@ nav.navbar {
 	box-sizing: border-box;
 	padding: 2rem 1rem;
 }.editor-item {
+	position: relative;
 	width: 100%;
 
 	display: flex;
 	flex-direction: row;
+
+	user-select: none;
 }.editor-item > .sidebar {
-	height: 100%;
+	height: auto;
 	width: 3rem;
 
 	display: flex;
 	justify-content: center;
+		align-items: center;
 
 	box-sizing: border-box;
-	padding-top: 0.5rem;
+
+	/* background: goldenrod; */
 }.editor-item > .sidebar > .rearrange-button {
 	width: 1.5rem;
 	height: 1.5rem;
@@ -132,18 +142,26 @@ nav.navbar {
 	opacity: 0.2;
 }.editor-item > .width {
 	width: 100%;
-}.editor-item > .col > .body {
+}.editor-item > .body {
 	position: relative;
 	
 	width: 100%;
 	height: 100%;
+	user-select: none;
+	/* background: lavenderblush; */
+}.editor-item.top-dropline {
+	border-top: 0.2rem solid #5c7fd8;
+}.editor-item.bottom-dropline {
+	border-bottom: 0.2rem solid #5c7fd8;
+}.noselect {
+	pointer-events: none;
 }
 
 /* Editor items */
 .item-textarea {
 	position: relative;
 	width: 100% !important;
-	height: 100%;
+	height: min-content;
 
 	font-size: 1.25rem;
 	border: none;
@@ -157,6 +175,21 @@ nav.navbar {
 
 	font-family: "Barlow", sans-serif;
 	overflow: hidden;
+}
+.item-header1, .item-header2 {
+	font-family: "Barlow", sans-serif;
+	font-size: 3rem;
+	font-weight: 800;
+
+	border: none;
+	outline: none;
+	background: none;
+	resize: none;
+	box-sizing: border-box;
+
+	padding-left: 0.5rem;
+	width: 100%;
+	height: 100%;
 }
 
 /* Snippet add button */
@@ -204,7 +237,7 @@ nav.navbar {
 	transform: rotate(0deg);
 	transform-origin: bottom right;
 	overflow: hidden;
-}.popup-menu > .item {
+}.popup-menu .item {
 	height: 3rem;
 	width: 100%;
 
@@ -218,14 +251,14 @@ nav.navbar {
 
 	cursor: pointer;
 	background: #fff;
-}.popup-menu > .item:hover {
+}.popup-menu .item:hover {
 	background: #f5f5f5;
-}.popup-menu > .item > .icon {
+}.popup-menu .item > .icon {
 	height: 100%;
 	opacity: 0.2;
-}.popup-menu > .item > .label {
+}.popup-menu .item > .label {
 	color: #282827;
-}.popup-menu > .hr {
+}.popup-menu .hr {
 	width: calc(100% - 1.5rem);
 	height: 0.1rem;
 	background: #f5f5f5;
@@ -244,4 +277,9 @@ nav.navbar {
 
 	margin: 0;
 	padding: 0;
+}
+
+/* Keyframes */
+@keyframes fade-out-border {
+	to { border-color: #00000000; border-width: 0; }
 }
