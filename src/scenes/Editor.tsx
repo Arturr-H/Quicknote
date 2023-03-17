@@ -34,19 +34,23 @@ export default class Editor extends React.PureComponent<Props, State> {
 
 		/* State */
 		this.state = {
-            content_snippets: [["default-title", { content: "## Welcome", type: ContentType.Header1 }]],
+            content_snippets: [],
             popup_menu_active: false
         };
 
         /* Bindings */
         this.handleInput = this.handleInput.bind(this);
+        this.rearrange = this.rearrange.bind(this);
 
         /* Refs */
         this.contentContainer = React.createRef();
 	}
 
 	/* Lifecycle */
-	componentDidMount(): void {}
+	componentDidMount(): void {
+        /* Add the welcome snippet */
+        this.addSnippet(ContentType.Paragraph); // TODO removethis
+    }
 	componentWillUnmount(): void {}
 
     /* Functions */
@@ -62,8 +66,43 @@ export default class Editor extends React.PureComponent<Props, State> {
             })
         });
     }
-    generateId() {
+    generateId(): string {
         return Math.random().toString(36).substring(2, 9);
+    }
+    rearrange(from_id: string, to_id: string, place: "above" | "below"): void {
+        let content_snippets = this.state.content_snippets;
+        let from: null | number = null;
+        let to: null | number = null;
+
+        for (let i = 0; i < content_snippets.length; i++) {
+            const element = content_snippets[i];
+            
+            if (element[0] == from_id) { from = i }
+            else if (element[0] == to_id) { to = i + 1 };
+
+            if (from !== null && to !== null) break;
+        };
+        
+        /* Move item */
+        console.log(from, "->", to);
+        console.log("Before moving", content_snippets.map(e => e[0]));
+        content_snippets = this.array_move(content_snippets, from!, to! - 1);
+        console.log("After move", content_snippets.map(e => e[0]));
+
+        /* Insert item */
+        this.setState({
+            content_snippets
+        }, () => {
+            this.forceUpdate();
+        })
+    }
+    array_move = (array: Array<[string, EditorContent]>, index_from: number, index_to: number) => {
+        const [removedItem] = array.splice(index_from, 1);
+  
+        // Insert the removed item at the "to" index
+        array.splice(index_to, 0, removedItem);
+        
+        return array;
     }
 
     /* Popup methods */
@@ -80,21 +119,9 @@ export default class Editor extends React.PureComponent<Props, State> {
 	render() {
 		return (
 			<div className="editor">
-                <EditorItem>
-                    <textarea
-                        placeholder="Notes..."
-                        style={{ height: "40px" }}
-                        /* Resize textarea on input */
-                        onInput={resizeTextarea}
-                        className="item-textarea"
-                        value={this.state.content_snippets[0][1].content}
-                        onChange={(e) => this.handleInput(e, "default-title", ContentType.Header1)}
-                    />
-                </EditorItem>
                 {
                     this.state.content_snippets
-                        .filter(e => e[0] !== "default-title")
-                        .map((e) => <EditorItem key={e[0]}>
+                        .map((e) => <EditorItem rearrange={this.rearrange} id={e[0]} key={e[0]}>
                             {getElement(e, e[1].content, this.handleInput)}
                         </EditorItem>)
                 }
@@ -164,10 +191,8 @@ const resizeTextarea = (e: any) => {
         which checks if there are any line breaks
     */
     if (e.currentTarget.value.indexOf("\n") === -1) {
-        console.log("YEs");
         e.currentTarget.style.height = "40px";
     }else {
-        console.log("NTO");
         e.currentTarget.style.height = "";
         e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
     }
