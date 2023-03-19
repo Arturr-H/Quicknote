@@ -63,7 +63,7 @@ export default class EditorItem extends React.PureComponent<Props, State> {
 		this.item.current!.style.pointerEvents = "none";
 
 		this.clearActiveHighlight();
-		this.updateItemPosition(e.nativeEvent.x, e.nativeEvent.y);
+		this.updateItemPosition(e.nativeEvent.y);
 		this.setState({ dragging: true });
 	};
 	setDraggingInactive() {
@@ -74,7 +74,6 @@ export default class EditorItem extends React.PureComponent<Props, State> {
 		/* Reset position */
 		this.item.current!.style.pointerEvents = "inherit";
 		this.item.current!.style.position = "relative";
-		this.item.current!.style.left = "0px";
 		this.item.current!.style.top = "0px";
 
 		/* Send function call to rearrange
@@ -116,10 +115,9 @@ export default class EditorItem extends React.PureComponent<Props, State> {
 			this.delta_mouse_y = e.y - this.prev_mouse_y;
 			this.prev_mouse_y = e.y;
 		};
-		this.updateItemPosition(e.x, e.y);
+		this.updateItemPosition(e.y);
 	}
-	updateItemPosition(x: number, y:number): void {
-		this.item.current!.style.left = (x - 24) + "px";
+	updateItemPosition(y:number): void {
 		this.item.current!.style.top =  (y - 24) + "px";
 	}
 	clearActiveHighlight = () => {
@@ -135,7 +133,12 @@ export default class EditorItem extends React.PureComponent<Props, State> {
 	/* Render */
 	render() {
 		return (
-			<div data-editor-id={this.props.id} id={`editor-item-${this.id}`} ref={this.item} className="editor-item">
+			<div
+				data-editor-id={this.props.id}
+				id={`editor-item-${this.id}`}
+				ref={this.item}
+				className={`editor-item ${this.state.dragging ? "dragging" : ""}`}
+			>
 
                 {/* Move gesture button (for rearranging) */}
                 <div className="sidebar" id={`editor-item-child-${this.id}`}>
