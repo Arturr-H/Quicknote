@@ -8,21 +8,35 @@ import PopupMenu from "../molecules/PopupMenu";
 // We stringify here because that will make
 // life easier when automatically generating
 // css class names. (Won't need large ifs)
-enum ContentType { Paragraph = "paragraph", Header1 = "header1", Header2 = "header2" }
+enum ContentType {
+    Paragraph = "paragraph",
+    Header1 = "header1",
+    Header2 = "header2",
+    Header3 = "header3",
+}
 
 /* Interfaces */
 interface Paragraph { content: string, type: ContentType }
 interface Header1   { content: string, type: ContentType }
 interface Header2   { content: string, type: ContentType }
+interface Header3   { content: string, type: ContentType }
 
 interface Props {}
 interface State {
     content_snippets: Array<[string, EditorContent]>, // ID, Content
-    popup_menu_active: boolean
+    popup_menu_active: boolean,
+
+    popup_menu: {
+        active: boolean,
+        x: number,
+        y: number
+    }
 }
 
 /* Types */
-type EditorContent = Paragraph | Header1 | Header2;
+type EditorContent =
+    Paragraph
+    | Header1 | Header2 | Header3;
 
 /* Main */
 export default class Editor extends React.PureComponent<Props, State> {
@@ -34,8 +48,13 @@ export default class Editor extends React.PureComponent<Props, State> {
 
 		/* State */
 		this.state = {
-            content_snippets: [],
-            popup_menu_active: false
+            content_snippets: [["default-snippet", { content: "Welcome!", type: ContentType.Header1 }]],
+            popup_menu_active: false,
+
+            popup_menu: {
+                active: false,
+                x: 0, y: 0,
+            }
         };
 
         /* Bindings */
@@ -48,10 +67,37 @@ export default class Editor extends React.PureComponent<Props, State> {
 
 	/* Lifecycle */
 	componentDidMount(): void {
-        /* Add the welcome snippet */
-        this.addSnippet(ContentType.Paragraph); // TODO removethis
+        /* Popup menu follow cursor */
+        document.addEventListener("contextmenu", this.show_popup);
+        document.addEventListener("mousedown", this.try_hide_popup);
+
     }
 	componentWillUnmount(): void {}
+
+    /* Popup handler */
+    show_popup = (e: MouseEvent) => {
+        this.setState({
+            popup_menu: {
+                active: true,
+                x: e.x,
+                y: e.y
+            }
+        })
+        e.preventDefault();
+    }
+    try_hide_popup = (e: MouseEvent) => {
+        if ((e.target as HTMLElement).id !== "popup-item") {
+            this.hide_popup();
+        }
+    }
+    hide_popup = () => {
+        this.setState({
+            popup_menu: {
+                active: false,
+                x: 0, y: 0
+            }
+        })
+    }
 
     /* Functions */
     handleInput(e: any, id: string, type: ContentType) {
@@ -77,6 +123,7 @@ export default class Editor extends React.PureComponent<Props, State> {
         for (let i = 0; i < content_snippets.length; i++) {
             const element = content_snippets[i];
             
+            // TODO place
             if (element[0] == from_id) { from = i }
             else if (element[0] == to_id) { to = i + 1 };
 
@@ -84,10 +131,7 @@ export default class Editor extends React.PureComponent<Props, State> {
         };
         
         /* Move item */
-        console.log(from, "->", to);
-        console.log("Before moving", content_snippets.map(e => e[0]));
         content_snippets = this.array_move(content_snippets, from!, to! - 1);
-        console.log("After move", content_snippets.map(e => e[0]));
 
         /* Insert item */
         this.setState({
@@ -122,25 +166,27 @@ export default class Editor extends React.PureComponent<Props, State> {
                 {
                     this.state.content_snippets
                         .map((e) => <EditorItem rearrange={this.rearrange} id={e[0]} key={e[0]}>
-                            {getElement(e, e[1].content, this.handleInput)}
+                            {getElement(
+                                e,
+                                /* Pass in state */
+                                e[1].content,
+                                this.handleInput
+                            )}
                         </EditorItem>)
                 }
 
-                {/*
-                    This button will show a popup menu where user can
-                    select what they want to append to their note page
-                */}
-                <button className="snippet-add-button">
-                    <div className="icon" />
-                </button>
-
                 {/* The "popup" menu */}
                 <PopupMenu
-                    active={this.state.popup_menu_active}
+                    x={this.state.popup_menu.x}
+                    y={this.state.popup_menu.y}
+                    active={this.state.popup_menu.active}
+                    hide={this.hide_popup}
                     buttons={[
-                        { label: "Add Paragraph", icon: "/items.svg", function: () => this.addSnippet(ContentType.Paragraph) },
-                        { label: "H1",          icon: "/items.svg", function: () => this.addSnippet(ContentType.Header1) },
-                        { label: "H2",          icon: "/items.svg", function: () => this.addSnippet(ContentType.Header2) }
+                        { label: "Add Paragraph", icon: "/icons/paragraph.svg", function: () => this.addSnippet(ContentType.Paragraph) },
+                        "break",
+                        { label: "H1",          icon: "/icons/h1.svg", function: () => this.addSnippet(ContentType.Header1) },
+                        { label: "H2",          icon: "/icons/h2.svg", function: () => this.addSnippet(ContentType.Header2) },
+                        { label: "H3",          icon: "/icons/h3.svg", function: () => this.addSnippet(ContentType.Header3) },
                     ]}
                 />
 			</div>
@@ -149,11 +195,17 @@ export default class Editor extends React.PureComponent<Props, State> {
 }
 
 /* Create JSX element */
-function getElement(e: [string, EditorContent], value: string, input_handler: (e: any, id: string, type: ContentType) => void) {
-    switch (e[1].type) {
+function getElement(
+    e: [string, EditorContent],
+    value: string,
+    input_handler: (e: any, id: string, type: ContentType) => void
+) {
+    let type = e[1].type;
+    switch (type) {
         /* Headers */
         case ContentType.Header1:
         case ContentType.Header2:
+        case ContentType.Header3:
             return <input
                 key={e[0]}
                 value={value}
@@ -173,7 +225,7 @@ function getElement(e: [string, EditorContent], value: string, input_handler: (e
                 onInput={resizeTextarea}
                 className={"item-textarea"}
             />
-        
+
         default:
             break;
     }
