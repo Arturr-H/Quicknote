@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 
 /* Interfaces */
 interface ButtonProps { icon: string, label: string, function: () => void }
-interface Props { active: boolean, buttons: Array<ButtonProps> }
+interface Props { active: boolean, buttons: Array<ButtonProps | "break"> }
 interface State {}
 
 /* Main */
@@ -27,15 +27,19 @@ export default class PopupMenu extends React.PureComponent<Props, State> {
 		return (
 			<div className="popup-menu">
                 {this.props.buttons.map((buttton, index) => {
-                    return <div key={index}>
-                        <Button
-                            label={buttton.label}
-                            icon={buttton.icon}
-                            function={buttton.function}
-                        />
+					if (typeof buttton !== "string") {
+						/* Return a button */
+						return <Button
+							label={buttton.label}
+							key={index}
+							icon={buttton.icon}
+							function={buttton.function}
+						/>
 
-                        { index == this.props.buttons.length - 1 ? null : <div className="hr" />}
-                    </div>
+					}else {
+						/* Else we return a line break */
+						return <div key={index} className="hr" />
+					}
                 })}
             </div>
         );
