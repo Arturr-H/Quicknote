@@ -4,7 +4,14 @@ import { invoke } from "@tauri-apps/api/tauri";
 
 /* Interfaces */
 interface ButtonProps { icon: string, label: string, function: () => void }
-interface Props { active: boolean, buttons: Array<ButtonProps | "break"> }
+interface Props {
+	active: boolean,
+	x: number,
+	y: number,
+	hide: () => void,
+
+	buttons: Array<ButtonProps | "break">
+}
 interface State {}
 
 /* Main */
@@ -25,23 +32,30 @@ export default class PopupMenu extends React.PureComponent<Props, State> {
 	/* Render */
 	render() {
 		return (
-			<div className="popup-menu">
-                {this.props.buttons.map((buttton, index) => {
-					if (typeof buttton !== "string") {
+			this.props.active ?
+			<div id="popup-item" className="popup-menu" style={{ left: this.props.x + "px", top: this.props.y + "px" }}>
+                {this.props.buttons.map((button, index) => {
+					if (typeof button !== "string") {
 						/* Return a button */
 						return <Button
-							label={buttton.label}
+							label={button.label}
 							key={index}
-							icon={buttton.icon}
-							function={buttton.function}
+							icon={button.icon}
+							function={() => {
+								button.function();
+
+								/* Hide popup menu */
+								this.props.hide();
+							}}
 						/>
 
 					}else {
 						/* Else we return a line break */
-						return <div key={index} className="hr" />
+						return <div id="popup-item" key={index} className="hr" />
 					}
                 })}
             </div>
+			: null
         );
 	};
 }
@@ -64,9 +78,9 @@ class Button extends React.PureComponent<ButtonProps, {}> {
 	/* Render */
 	render() {
 		return (
-			<div className="item" onClick={this.props.function}>
-                <img className="icon" src={this.props.icon} />
-                <p className="label">{this.props.label}</p>
+			<div id="popup-item" className="item" onClick={this.props.function}>
+                <img id="popup-item" className="icon" src={this.props.icon} />
+                <p id="popup-item" className="label">{this.props.label}</p>
             </div>
         );
 	};
