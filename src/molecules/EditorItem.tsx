@@ -3,11 +3,12 @@ import React, { RefObject } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 
 /* Interfaces */
-interface State { dragging: boolean }
+interface State { dragging: boolean, can_delete: boolean }
 interface Props {
 	children: any,
 	id: string,
-	rearrange: (from_id: string, to_id: string, place: "above" | "below") => void
+	rearrange: (from_id: string, to_id: string, place: "above" | "below") => void,
+	delete: (id: string) => void
 }
 
 /* Main */
@@ -30,7 +31,8 @@ export default class EditorItem extends React.PureComponent<Props, State> {
 
 		/* State */
 		this.state = {
-			dragging: false
+			dragging: false,
+			can_delete: false
 		};
 
 		/* Bindings */
@@ -76,6 +78,14 @@ export default class EditorItem extends React.PureComponent<Props, State> {
 		this.item.current!.style.position = "relative";
 		this.item.current!.style.top = "0px";
 
+		/* Reset delete blob */
+		document.getElementById("delete-blob")!.classList.remove("delete-blob-intro");
+
+		/* If can delete */
+		if (this.state.can_delete) {
+			return this.props.delete(this.props.id);
+		};
+
 		/* Send function call to rearrange
 			order of elements to super */
 		if (this.drop_on !== null)
@@ -110,6 +120,20 @@ export default class EditorItem extends React.PureComponent<Props, State> {
 		}else {
 			this.drop_on = null;
 		};
+
+		/* Check if user wants to delete the
+			snippet (snippet will be deleted)
+			once released at the bottom of the
+			screen (where the trashcan belongs) */
+		if (e.y > window.innerHeight - 240) {
+			if (this.state.can_delete === false)
+				this.setState({ can_delete: true }, () => {
+					document.getElementById("delete-blob")!.classList.add("delete-blob-intro");
+				});
+		}else {
+			this.setState({ can_delete: false });
+			document.getElementById("delete-blob")!.classList.remove("delete-blob-intro");
+		}
 
 		if (e.y !== this.prev_mouse_y) {
 			this.delta_mouse_y = e.y - this.prev_mouse_y;
@@ -149,6 +173,7 @@ export default class EditorItem extends React.PureComponent<Props, State> {
 					/>
                 </div>
 
+				{/* Note body */}
                 <div id={`editor-item-child-${this.id}`} className="width col body">
                     {this.props.children}
                 </div>
