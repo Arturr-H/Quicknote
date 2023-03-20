@@ -21,7 +21,10 @@ interface Header1   { content: string, type: ContentType }
 interface Header2   { content: string, type: ContentType }
 interface Header3   { content: string, type: ContentType }
 
-interface Props {}
+interface Props {
+    go_home: () => void,
+    id: string
+}
 interface State {
     content_snippets: Array<[string, EditorContent]>, // ID, Content
     popup_menu_active: boolean,
@@ -41,6 +44,7 @@ type EditorContent =
 /* Main */
 export default class Editor extends React.PureComponent<Props, State> {
     contentContainer: RefObject<HTMLDivElement>;
+    id: string;
 
 	/* Construct */
 	constructor(props: Props) {
@@ -63,6 +67,9 @@ export default class Editor extends React.PureComponent<Props, State> {
 
         /* Refs */
         this.contentContainer = React.createRef();
+
+        /* Static */
+        this.id = this.props.id;
 	}
 
 	/* Lifecycle */
@@ -70,9 +77,11 @@ export default class Editor extends React.PureComponent<Props, State> {
         /* Popup menu follow cursor */
         document.addEventListener("contextmenu", this.show_popup);
         document.addEventListener("mousedown", this.try_hide_popup);
-
     }
-	componentWillUnmount(): void {}
+	componentWillUnmount(): void {
+        document.removeEventListener("contextmenu", this.show_popup);
+        document.removeEventListener("mousedown", this.try_hide_popup);
+    }
 
     /* Popup handler */
     show_popup = (e: MouseEvent) => {
@@ -97,6 +106,28 @@ export default class Editor extends React.PureComponent<Props, State> {
                 x: 0, y: 0
             }
         })
+    }
+
+    /* Save document */
+    save_document = () => {
+        let end: Array<{ id: string, content: string, type: string }> = [];
+
+        this.state.content_snippets.forEach(item => {
+            end.push({
+                id: item[0],
+                content: item[1].content,
+                type: item[1].type,
+            })
+        });
+
+        invoke("save_project", {
+            data: JSON.stringify({
+                id: this.id,
+                title: "Titltll",
+                date: 12480124821,
+                content: end
+            })
+        });
     }
 
     /* Functions */
@@ -158,6 +189,11 @@ export default class Editor extends React.PureComponent<Props, State> {
             ]
         });
     };
+    deleteSnippet = (id: string) => {
+        this.setState({
+            content_snippets: this.state.content_snippets.filter(e => e[0] !== id)
+        })
+    }
 
 	/* Render */
 	render() {
@@ -165,7 +201,7 @@ export default class Editor extends React.PureComponent<Props, State> {
 			<div className="editor">
                 {
                     this.state.content_snippets
-                        .map((e) => <EditorItem rearrange={this.rearrange} id={e[0]} key={e[0]}>
+                        .map((e) => <EditorItem delete={this.deleteSnippet} rearrange={this.rearrange} id={e[0]} key={e[0]}>
                             {getElement(
                                 e,
                                 /* Pass in state */
@@ -187,8 +223,16 @@ export default class Editor extends React.PureComponent<Props, State> {
                         { label: "H1",          icon: "/icons/h1.svg", function: () => this.addSnippet(ContentType.Header1) },
                         { label: "H2",          icon: "/icons/h2.svg", function: () => this.addSnippet(ContentType.Header2) },
                         { label: "H3",          icon: "/icons/h3.svg", function: () => this.addSnippet(ContentType.Header3) },
+                        "break",
+                        { label: "Home", icon: "/icons/home.svg", function: this.props.go_home },
+                        { label: "Save", icon: "/icons/home.svg", function: this.save_document }
                     ]}
                 />
+                
+                <div id="delete-blob" className="delete-blob-container">
+                    <div className="delete-blob" />
+                    <p>Release to delete!</p>
+                </div>
 			</div>
 		);
 	};
