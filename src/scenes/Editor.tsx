@@ -3,6 +3,7 @@ import React, { RefObject } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import EditorItem from "../molecules/EditorItem";
 import PopupMenu from "../molecules/PopupMenu";
+import { ProjectData } from "../molecules/Project";
 
 /* Enums */
 // We stringify here because that will make
@@ -16,18 +17,19 @@ enum ContentType {
 }
 
 /* Interfaces */
-interface Paragraph { content: string, type: ContentType }
-interface Header1   { content: string, type: ContentType }
-interface Header2   { content: string, type: ContentType }
-interface Header3   { content: string, type: ContentType }
+interface Paragraph { id: string, content: string, type: ContentType }
+interface Header1   { id: string, content: string, type: ContentType }
+interface Header2   { id: string, content: string, type: ContentType }
+interface Header3   { id: string, content: string, type: ContentType }
 
 interface Props {
     go_home: () => void,
-    id: string
+    id: string,
 }
 interface State {
-    content_snippets: Array<[string, EditorContent]>, // ID, Content
+    content_snippets: Array<EditorContent>,
     popup_menu_active: boolean,
+    title: string,
 
     popup_menu: {
         active: boolean,
@@ -37,14 +39,16 @@ interface State {
 }
 
 /* Types */
-type EditorContent =
+export type EditorContent =
     Paragraph
     | Header1 | Header2 | Header3;
 
 /* Main */
 export default class Editor extends React.PureComponent<Props, State> {
     contentContainer: RefObject<HTMLDivElement>;
+    title: RefObject<HTMLSpanElement>;
     id: string;
+    data: ProjectData | null;
 
 	/* Construct */
 	constructor(props: Props) {
@@ -52,8 +56,9 @@ export default class Editor extends React.PureComponent<Props, State> {
 
 		/* State */
 		this.state = {
-            content_snippets: [["default-snippet", { content: "Welcome!", type: ContentType.Header1 }]],
+            content_snippets: [],
             popup_menu_active: false,
+            title: "",
 
             popup_menu: {
                 active: false,
@@ -67,9 +72,11 @@ export default class Editor extends React.PureComponent<Props, State> {
 
         /* Refs */
         this.contentContainer = React.createRef();
+        this.title = React.createRef();
 
         /* Static */
         this.id = this.props.id;
+        this.data = null;
 	}
 
 	/* Lifecycle */
@@ -77,6 +84,21 @@ export default class Editor extends React.PureComponent<Props, State> {
         /* Popup menu follow cursor */
         document.addEventListener("contextmenu", this.show_popup);
         document.addEventListener("mousedown", this.try_hide_popup);
+
+        /* Set data */
+        invoke("get_project", { id: this.id }).then((e: any) => {
+            let data = e as ProjectData;
+            this.data = data;
+
+            console.log(data);
+// ["default-snippet", { content: "Welcome!", type: ContentType.Header1 }]
+            this.setState({
+                content_snippets: data.content,
+                title: data.title,
+            }, () => {
+                this.title.current!.innerText = data.title;
+            })
+        });
     }
 	componentWillUnmount(): void {
         document.removeEventListener("contextmenu", this.show_popup);
@@ -114,17 +136,17 @@ export default class Editor extends React.PureComponent<Props, State> {
 
         this.state.content_snippets.forEach(item => {
             end.push({
-                id: item[0],
-                content: item[1].content,
-                type: item[1].type,
+                id: item.id,
+                content: item.content,
+                type: item.type,
             })
         });
 
         invoke("save_project", {
             data: JSON.stringify({
-                id: this.id,
-                title: "Titltll",
-                date: 12480124821,
+                id: this.data?.id,
+                title: this.state.title,
+                date: this.data?.date,
                 content: end
             })
         });
@@ -135,8 +157,8 @@ export default class Editor extends React.PureComponent<Props, State> {
         const content = e.target.value;
         this.setState({
             content_snippets: this.state.content_snippets.map(e => {
-                if (e[0] === id) {
-                    return [id, { content, type }];
+                if (e.id === id) {
+                    return { content, id, type };
                 } else {
                     return e;
                 }
@@ -155,8 +177,8 @@ export default class Editor extends React.PureComponent<Props, State> {
             const element = content_snippets[i];
             
             // TODO place
-            if (element[0] == from_id) { from = i }
-            else if (element[0] == to_id) { to = i + 1 };
+            if (element.id == from_id) { from = i }
+            else if (element.id == to_id) { to = i + 1 };
 
             if (from !== null && to !== null) break;
         };
@@ -171,7 +193,7 @@ export default class Editor extends React.PureComponent<Props, State> {
             this.forceUpdate();
         })
     }
-    array_move = (array: Array<[string, EditorContent]>, index_from: number, index_to: number) => {
+    array_move = (array: Array<EditorContent>, index_from: number, index_to: number) => {
         const [removedItem] = array.splice(index_from, 1);
   
         // Insert the removed item at the "to" index
@@ -179,19 +201,22 @@ export default class Editor extends React.PureComponent<Props, State> {
         
         return array;
     }
+    setTitle = (title: string) => {
+        this.setState({ title })
+    }
 
     /* Popup methods */
     addSnippet = (content_type: ContentType) => {
         this.setState({
             content_snippets: [
                 ...this.state.content_snippets,
-                [this.generateId(), { content: "", type: content_type }]
+                { content: "", type: content_type, id: this.generateId() }
             ]
         });
     };
     deleteSnippet = (id: string) => {
         this.setState({
-            content_snippets: this.state.content_snippets.filter(e => e[0] !== id)
+            content_snippets: this.state.content_snippets.filter(e => e.id !== id)
         })
     }
 
@@ -199,13 +224,25 @@ export default class Editor extends React.PureComponent<Props, State> {
 	render() {
 		return (
 			<div className="editor">
+                <div className="editor-header">
+                    <span
+                        spellCheck={false}
+                        contentEditable={true}
+                        className="editor-title"
+                        data-ph="Title..."
+                        onInput={(e) => this.setTitle((e.target as HTMLSpanElement).innerText)}
+                        ref={this.title}
+                    />
+                </div>
+
                 {
                     this.state.content_snippets
-                        .map((e) => <EditorItem delete={this.deleteSnippet} rearrange={this.rearrange} id={e[0]} key={e[0]}>
+                        .map((e) => <EditorItem delete={this.deleteSnippet} rearrange={this.rearrange} id={e.id} key={e.id}>
                             {getElement(
-                                e,
+                                e.type,
+                                e.id,
                                 /* Pass in state */
-                                e[1].content,
+                                e.content,
                                 this.handleInput
                             )}
                         </EditorItem>)
@@ -240,31 +277,32 @@ export default class Editor extends React.PureComponent<Props, State> {
 
 /* Create JSX element */
 function getElement(
-    e: [string, EditorContent],
+    type: ContentType,
+    id: string,
     value: string,
     input_handler: (e: any, id: string, type: ContentType) => void
 ) {
-    let type = e[1].type;
+
     switch (type) {
         /* Headers */
         case ContentType.Header1:
         case ContentType.Header2:
         case ContentType.Header3:
             return <input
-                key={e[0]}
+                key={id}
                 value={value}
-                onChange={(event) => input_handler(event, e[0], e[1].type)}
+                onChange={(event) => input_handler(event, id, type)}
                 placeholder="Header..."
-                className={"item-" + e[1].type}
+                className={"item-" + type}
             />
         
         /* Paragraph */
         case ContentType.Paragraph:
             return <textarea
-                key={e[0]}
+                key={id}
                 style={{ height: "40px" }}
                 value={value}
-                onChange={(event) => input_handler(event, e[0], e[1].type)}
+                onChange={(event) => input_handler(event, id, type)}
                 placeholder="Notes..."
                 onInput={resizeTextarea}
                 className={"item-textarea"}
