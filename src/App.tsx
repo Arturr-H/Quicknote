@@ -13,7 +13,8 @@ interface Props {}
 interface State {
 	editor_open: boolean,
 	projects: ProjectInterface[],
-	project_id: string
+	project_id: string,
+	project_title: string
 }
 
 /* Main */
@@ -28,7 +29,8 @@ export default class App extends React.PureComponent<Props, State> {
 			editor_open: false,
 
 			projects: [],
-			project_id: "NONE"
+			project_id: "NONE",
+			project_title: "",
 		};
 
 		/* Function bindings */
@@ -45,8 +47,26 @@ export default class App extends React.PureComponent<Props, State> {
 	componentWillUnmount(): void {}
 
 	/* Functions */
-	openEditor(id: string) { this.setState({ editor_open: true, project_id: id }); }
-	closeEditor() { this.setState({ editor_open: false }); }
+	openEditor(id: string) {
+		let title: string;
+		let p = this.state.projects.find(e => e.id === id);
+		if (p !== undefined) {
+			title = p.title;
+		}else {
+			title = "";
+		};
+
+		this.setState({
+			editor_open: true,
+			project_id: id,
+			project_title: title
+		});
+	};
+	closeEditor() {
+		this.setState({ editor_open: false }, () => {
+			this.loadProjects();
+		});
+	}
 
 	generateId(): string { return Math.random().toString(36).substring(2, 9); }
 
@@ -81,7 +101,7 @@ export default class App extends React.PureComponent<Props, State> {
 
 				{/* Links to projects */}
 				<div className="project-list">
-
+					
 					{/* Add project button */}
 					<div
 						className="create-project-btn"
