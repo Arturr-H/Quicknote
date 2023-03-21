@@ -1,6 +1,7 @@
 /* Imports */
 import React from "react";
 import { invoke } from "@tauri-apps/api/tauri";
+import { EditorContent } from "../scenes/Editor";
 
 /* Interfaces */
 interface Props {
@@ -63,4 +64,12 @@ export interface ProjectInterface {
 	title: string,
 	date: number,
 	id: string,
+}
+
+/* Interface for actual project data (used in editor) */
+export interface ProjectData {
+	title: string,
+	date: number,
+	id: string,
+	content: Array<EditorContent>
 }
