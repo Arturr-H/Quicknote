@@ -1,5 +1,6 @@
 /* Imports */
 import React from "react";
+import Logo from "../assets/logo-text.svg";
 
 /* Interfaces */
 interface Props {}
@@ -24,7 +25,7 @@ export default class Navbar extends React.PureComponent<Props, State> {
 	render() {
 		return (
 			<nav className="navbar" data-tauri-drag-region>
-
+				<img className="logo-top" src={Logo} />
 			</nav>
 		);
 	};
