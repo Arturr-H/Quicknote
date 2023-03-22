@@ -7,8 +7,8 @@ mod titlebar;
 mod project;
 
 /* Imports */
-use std::{path::{ Path, PathBuf }, io::Read};
-use tauri::{Manager, State};
+use std::{ path::{ Path, PathBuf }, io::Read };
+use tauri::{ Manager, State };
 use titlebar::WindowExt;
 use project::{ EditorContent, Project };
 use bincode;
@@ -28,14 +28,16 @@ struct Global {
 #[tauri::command]
 async fn save_project(data: String, global: State<'_, Global>) -> Result<(), String> {
     /* Decode data */
-    let data: Project = serde_json::from_str(&data).unwrap();
-    println!("Saving project with title {}", &data.title());
+    let data: Project = match serde_json::from_str(&data) {
+        Ok(e) => e,
+        Err(_) => return Err("Couldn't parse from string".into())
+    };
 
     /* Save */
     std::fs::write(
         global.home_dir.join(data.id()),
-        bincode::serialize(&data).unwrap()
-    ).unwrap();
+        bincode::serialize(&data).unwrap_or(Vec::new())
+    ).ok();
 
     Ok(())
 }
@@ -46,15 +48,20 @@ async fn get_projects(global: State<'_, Global>) -> Result<Vec<Project>, ()> {
     let mut res: Vec<Project> = Vec::new();
 
     for project in std::fs::read_dir(&global.home_dir).unwrap() {
-        let s = &project.unwrap().file_name().to_str().unwrap().to_string();
+        let s = match match &project {
+            Ok(e) => e,
+            Err(_) => continue
+        }.file_name().to_str() {
+            Some(e) => e,
+            None => continue
+        }.to_string();
+
         res.push(
             match Project::from_id(
                 &global.home_dir,
                 &s
             ) {
-                Some(e) => {
-                    e
-                },
+                Some(e) => e,
                 None => continue,
             }
         )
@@ -70,10 +77,16 @@ async fn get_project(id: String, global: State<'_, Global>) -> Result<Project, (
     println!("Getting project {path:?}");
 
     /* Open file */
-    let buf = std::fs::read(path).unwrap();
+    let buf = match std::fs::read(path) {
+        Ok(e) => e,
+        Err(_) => return Err(())
+    };
 
     /* Deserialize */
-    let content = bincode::deserialize::<Project>(&buf).unwrap();
+    let content = match bincode::deserialize::<Project>(&buf) {
+        Ok(e) => e,
+        Err(_) => return Err(())
+    };
 
     Ok(content)
 }
@@ -83,16 +96,23 @@ async fn get_project(id: String, global: State<'_, Global>) -> Result<Project, (
 async fn create_project(global: State<'_, Global>) -> Result<String, ()> {
     let id = uuid::Uuid::new_v4().as_hyphenated().to_string();
 
-    println!("created project {id}");
-    println!("Data: {}", String::from_utf8_lossy(&bincode::serialize(&Project::blank(id.to_string())).unwrap()));
-
     /* Save */
     std::fs::write(
         global.home_dir.join(&id),
-        bincode::serialize(&Project::blank(id.to_string())).unwrap()
-    ).unwrap();
+        bincode::serialize(&Project::blank(id.to_string())).unwrap_or(Vec::new())
+    ).ok();
 
     Ok(id)
+}
+#[tauri::command]
+async fn delete_project(id: String, global: State<'_, Global>) -> Result<(), ()> {
+
+    /* Save */
+    std::fs::remove_file(
+        global.home_dir.join(&id)
+    ).ok();
+
+    Ok(())
 }
 
 /* Main */
@@ -108,7 +128,7 @@ fn main() {
 
         /* Port functions to JavaScript */
         .invoke_handler(tauri::generate_handler![
-            create_project, save_project, get_projects, get_project
+            create_project, save_project, get_projects, get_project, delete_project
         ])
 
         /* Hide titlebar */
