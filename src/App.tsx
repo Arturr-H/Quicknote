@@ -7,6 +7,8 @@ import "./styles.css";
 import Navbar from "./molecules/Navbar";
 import Project, { ProjectInterface } from "./molecules/Project";
 import Editor from "./scenes/Editor";
+import PopupMenu from "./molecules/PopupMenu";
+import { dialog } from "@tauri-apps/api";
 
 /* Interfaces */
 interface Props {}
@@ -68,6 +70,19 @@ export default class App extends React.PureComponent<Props, State> {
 		});
 	}
 
+	/* Delete quicknote */
+	delete = (id: string) => {
+		dialog.ask("Are you sure you want to delete this?",
+			{ title: "Quicknote", type: "warning" }
+		).then(will_delete => {
+			if (will_delete) {
+				invoke("delete_project", { id }).then(() => {
+					this.loadProjects();
+				});
+			}
+		});
+	}
+
 	generateId(): string { return Math.random().toString(36).substring(2, 9); }
 
 	loadProjects() {
@@ -119,6 +134,7 @@ export default class App extends React.PureComponent<Props, State> {
 							id={project.id}
 							key={project.id}
 							onOpen={this.openEditor}
+							delete={this.delete}
 						/>
 					)}
 				</div>
