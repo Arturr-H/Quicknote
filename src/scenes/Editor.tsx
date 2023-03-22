@@ -16,6 +16,8 @@ enum ContentType {
     Header1 = "header1",
     Header2 = "header2",
     Header3 = "header3",
+
+    Horizontal = "horizontal"
 }
 
 /* Interfaces */
@@ -23,6 +25,7 @@ interface Paragraph { id: string, content: string, type: ContentType }
 interface Header1   { id: string, content: string, type: ContentType }
 interface Header2   { id: string, content: string, type: ContentType }
 interface Header3   { id: string, content: string, type: ContentType }
+interface Horizontal{ id: string, content: string, type: ContentType }
 
 interface Props {
     go_home: () => void,
@@ -33,20 +36,15 @@ interface State {
     popup_menu_active: boolean,
     title: string,
 
-    popup_menu: {
-        active: boolean,
-        x: number,
-        y: number
-    },
-
     is_saved: boolean,
     particles: boolean
 }
 
 /* Types */
 export type EditorContent =
-    Paragraph
-    | Header1 | Header2 | Header3;
+    Paragraph |
+    Horizontal |
+    Header1 | Header2 | Header3;
 
 /* Main */
 export default class Editor extends React.PureComponent<Props, State> {
@@ -64,11 +62,6 @@ export default class Editor extends React.PureComponent<Props, State> {
             content_snippets: [],
             popup_menu_active: false,
             title: "",
-
-            popup_menu: {
-                active: false,
-                x: 0, y: 0,
-            },
 
             is_saved: true,
             particles: false
@@ -90,10 +83,6 @@ export default class Editor extends React.PureComponent<Props, State> {
 	/* Lifecycle */
 	componentDidMount(): void {
 
-        /* Popup menu follow cursor */
-        document.addEventListener("contextmenu", this.show_popup);
-        document.addEventListener("mousedown", this.try_hide_popup);
-
         /* Set data */
         invoke("get_project", { id: this.id }).then((e: any) => {
             let data = e as ProjectData;
@@ -107,35 +96,7 @@ export default class Editor extends React.PureComponent<Props, State> {
             })
         });
     }
-	componentWillUnmount(): void {
-        document.removeEventListener("contextmenu", this.show_popup);
-        document.removeEventListener("mousedown", this.try_hide_popup);
-    }
-
-    /* Popup handler */
-    show_popup = (e: MouseEvent) => {
-        this.setState({
-            popup_menu: {
-                active: true,
-                x: e.x,
-                y: e.y
-            }
-        })
-        e.preventDefault();
-    }
-    try_hide_popup = (e: MouseEvent) => {
-        if ((e.target as HTMLElement).id !== "popup-item") {
-            this.hide_popup();
-        }
-    }
-    hide_popup = () => {
-        this.setState({
-            popup_menu: {
-                active: false,
-                x: 0, y: 0
-            }
-        })
-    }
+	componentWillUnmount(): void {}
 
     /* Save document */
     save_document = () => {
@@ -290,16 +251,14 @@ export default class Editor extends React.PureComponent<Props, State> {
 
                 {/* The "popup" menu */}
                 <PopupMenu
-                    x={this.state.popup_menu.x}
-                    y={this.state.popup_menu.y}
-                    active={this.state.popup_menu.active}
-                    hide={this.hide_popup}
                     buttons={[
                         { label: "Add Paragraph", icon: "/icons/paragraph.svg", function: () => this.addSnippet(ContentType.Paragraph) },
                         "break",
                         { label: "H1",          icon: "/icons/h1.svg", function: () => this.addSnippet(ContentType.Header1) },
                         { label: "H2",          icon: "/icons/h2.svg", function: () => this.addSnippet(ContentType.Header2) },
                         { label: "H3",          icon: "/icons/h3.svg", function: () => this.addSnippet(ContentType.Header3) },
+                        "break",
+                        { label: "Horizontal",          icon: "/icons/h3.svg", function: () => this.addSnippet(ContentType.Horizontal) },
                         "break",
                         { label: "Home", icon: "/icons/home.svg", function: this.go_home },
                         { label: "Save", icon: "/icons/home.svg", function: this.save_document }
@@ -342,7 +301,7 @@ function getElement(
         case ContentType.Paragraph:
             return <textarea
                 key={id}
-                style={{ height: value.split("\n").length * 26.75 + "px" }}
+                // style={{ height: value.split("\n").length * 26.75 + "px" }}
                 value={value}
                 onChange={(event) => input_handler(event, id, type)}
                 placeholder="Notes..."
@@ -350,6 +309,12 @@ function getElement(
                 onBlur={resizeTextarea}
                 className={"item-textarea"}
             />
+
+        /* Horizontal break */
+        case ContentType.Horizontal:
+            return <div className="item-horizontal-container">
+                <div className="item-horizontal" />
+            </div>
 
         default:
             break;
