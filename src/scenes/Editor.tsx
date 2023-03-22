@@ -37,7 +37,7 @@ interface State {
     title: string,
 
     is_saved: boolean,
-    particles: boolean
+    particles: string[]
 }
 
 /* Types */
@@ -64,7 +64,7 @@ export default class Editor extends React.PureComponent<Props, State> {
             title: "",
 
             is_saved: true,
-            particles: false
+            particles: []
         };
 
         /* Bindings */
@@ -83,6 +83,12 @@ export default class Editor extends React.PureComponent<Props, State> {
 	/* Lifecycle */
 	componentDidMount(): void {
 
+        /* If save */
+        document.addEventListener("keydown", (e) => {
+            if (e.metaKey && e.key == "s")
+                this.save_document();
+        })
+
         /* Set data */
         invoke("get_project", { id: this.id }).then((e: any) => {
             let data = e as ProjectData;
@@ -100,6 +106,7 @@ export default class Editor extends React.PureComponent<Props, State> {
 
     /* Save document */
     save_document = () => {
+        if (!this.state.is_saved) this.spawnParticles();
         let end: Array<{ id: string, content: string, type: string }> = [];
 
         this.state.content_snippets.forEach(item => {
@@ -183,7 +190,8 @@ export default class Editor extends React.PureComponent<Props, State> {
             content_snippets: [
                 ...this.state.content_snippets,
                 { content: "", type: content_type, id: this.generateId() }
-            ]
+            ],
+            is_saved: false
         });
     };
     deleteSnippet = (id: string) => {
@@ -196,10 +204,11 @@ export default class Editor extends React.PureComponent<Props, State> {
 
     /* Spawn particles */
     spawnParticles = () => {
-        this.setState({ particles: true });
+        let id = this.generateId();
+        this.setState({ particles: [...this.state.particles, id] });
 
         setTimeout(() => {
-            this.setState({ particles: false });
+            document.getElementById(id)?.remove();
         }, 2000);
     }
 
@@ -270,7 +279,11 @@ export default class Editor extends React.PureComponent<Props, State> {
                     <p>Release to delete!</p>
                 </div>
 
-                { this.state.particles ? <ParticleEmitter lifetime={300} num_particles={20} /> : null }
+                {
+                    this.state.particles.map((e) => 
+                        <ParticleEmitter id={e} key={e} lifetime={300} num_particles={20} />
+                    )
+                }
 			</div>
 		);
 	};
@@ -299,15 +312,12 @@ function getElement(
         
         /* Paragraph */
         case ContentType.Paragraph:
-            return <textarea
+            return <TextArea
                 key={id}
-                // style={{ height: value.split("\n").length * 26.75 + "px" }}
+                type={type}
+                id={id}
                 value={value}
                 onChange={(event) => input_handler(event, id, type)}
-                placeholder="Notes..."
-                onInput={resizeTextarea}
-                onBlur={resizeTextarea}
-                className={"item-textarea"}
             />
 
         /* Horizontal break */
@@ -318,6 +328,46 @@ function getElement(
 
         default:
             break;
+    }
+}
+
+/* Textarea */
+interface TextareaProps {
+    value: string,
+    type: ContentType,
+    id: string,
+    onChange: (e: any, id: string, type: ContentType) => void
+};
+class TextArea extends React.PureComponent<TextareaProps, {}> {
+    item: RefObject<HTMLTextAreaElement>;
+    
+    constructor(props: TextareaProps) {
+        super(props);
+
+        this.item = React.createRef();
+    }
+    componentDidMount(): void {
+        if (this.item && this.item.current !== null) {
+            if (this.item.current.value.indexOf("\n") === -1) {
+                this.item.current.style.height = "40px";
+            }else {
+                this.item.current.style.height = "";
+                this.item.current.style.height = this.item.current.scrollHeight + "px"
+            }
+        }
+    }
+
+    render(): React.ReactNode {
+        return (
+            <textarea
+                ref={this.item}
+                value={this.props.value}
+                onChange={(event) => this.props.onChange(event, this.props.id, this.props.type)}
+                placeholder="Notes..."
+                onInput={resizeTextarea}
+                className={"item-textarea"}
+            />
+        )
     }
 }
 
