@@ -6,12 +6,14 @@ import EditorItem from "../molecules/EditorItem";
 import PopupMenu from "../molecules/PopupMenu";
 import { ProjectData } from "../molecules/Project";
 import { ParticleEmitter } from "../functional/Emitter";
+import { TextArea } from "../molecules/TextArea";
+import { Header } from "../molecules/Header";
 
 /* Enums */
 // We stringify here because that will make
 // life easier when automatically generating
 // css class names. (Won't need large ifs)
-enum ContentType {
+export enum ContentType {
     Paragraph = "paragraph",
     Header1 = "header1",
     Header2 = "header2",
@@ -110,6 +112,18 @@ export default class Editor extends React.PureComponent<Props, State> {
             e.preventDefault();
             this.go_home();
         }
+        else if (e.metaKey && e.key == "1")
+            this.addSnippet(ContentType.Header1);
+        else if (e.metaKey && e.key == "2")
+            this.addSnippet(ContentType.Header2);
+        else if (e.metaKey && e.key == "3")
+            this.addSnippet(ContentType.Header3);
+
+        else if (e.metaKey && e.key == "p")
+            this.addSnippet(ContentType.Paragraph);
+
+        else if (e.metaKey && e.key == "o")
+            this.addSnippet(ContentType.Horizontal);
     }
 
     /* Save document */
@@ -200,6 +214,8 @@ export default class Editor extends React.PureComponent<Props, State> {
                 { content: "", type: content_type, id: this.generateId() }
             ],
             is_saved: false
+        }, () => {
+            /* Focus snippet */
         });
     };
     deleteSnippet = (id: string) => {
@@ -269,16 +285,16 @@ export default class Editor extends React.PureComponent<Props, State> {
                 {/* The "popup" menu */}
                 <PopupMenu
                     buttons={[
-                        { label: "Add Paragraph", icon: "/icons/paragraph.svg", function: () => this.addSnippet(ContentType.Paragraph) },
+                        { label: "Paragraph", icon: "/icons/paragraph.svg", function: () => this.addSnippet(ContentType.Paragraph), shortcut_label: "⌘P" },
                         "break",
-                        { label: "H1",          icon: "/icons/h1.svg", function: () => this.addSnippet(ContentType.Header1) },
-                        { label: "H2",          icon: "/icons/h2.svg", function: () => this.addSnippet(ContentType.Header2) },
-                        { label: "H3",          icon: "/icons/h3.svg", function: () => this.addSnippet(ContentType.Header3) },
+                        { label: "H1",          icon: "/icons/h1.svg", function: () => this.addSnippet(ContentType.Header1), shortcut_label: "⌘1" },
+                        { label: "H2",          icon: "/icons/h2.svg", function: () => this.addSnippet(ContentType.Header2), shortcut_label: "⌘2" },
+                        { label: "H3",          icon: "/icons/h3.svg", function: () => this.addSnippet(ContentType.Header3), shortcut_label: "⌘3" },
                         "break",
-                        { label: "Horizontal",          icon: "/icons/h3.svg", function: () => this.addSnippet(ContentType.Horizontal) },
+                        { label: "Horizontal",          icon: "/icons/horizontal.svg", function: () => this.addSnippet(ContentType.Horizontal), shortcut_label: "⌘Q" },
                         "break",
-                        { label: "Home", icon: "/icons/home.svg", function: this.go_home },
-                        { label: "Save", icon: "/icons/home.svg", function: this.save_document }
+                        { label: "Home", icon: "/icons/home.svg", function: this.go_home, shortcut_label: "⌘R" },
+                        { label: "Save", icon: "/icons/save.svg", function: this.save_document, shortcut_label: "⌘S" }
                     ]}
                 />
                 
@@ -310,12 +326,12 @@ function getElement(
         case ContentType.Header1:
         case ContentType.Header2:
         case ContentType.Header3:
-            return <input
+            return <Header
                 key={id}
+                type={type}
+                id={id}
                 value={value}
                 onChange={(event) => input_handler(event, id, type)}
-                placeholder="Header..."
-                className={"item-" + type}
             />
         
         /* Paragraph */
@@ -339,61 +355,3 @@ function getElement(
     }
 }
 
-/* Textarea */
-interface TextareaProps {
-    value: string,
-    type: ContentType,
-    id: string,
-    onChange: (e: any, id: string, type: ContentType) => void
-};
-class TextArea extends React.PureComponent<TextareaProps, {}> {
-    item: RefObject<HTMLTextAreaElement>;
-    
-    constructor(props: TextareaProps) {
-        super(props);
-
-        this.item = React.createRef();
-    }
-    componentDidMount(): void {
-        if (this.item && this.item.current !== null) {
-            if (this.item.current.value.indexOf("\n") === -1) {
-                this.item.current.style.height = "40px";
-            }else {
-                this.item.current.style.height = "";
-                this.item.current.style.height = this.item.current.scrollHeight + "px"
-            }
-        }
-    }
-
-    render(): React.ReactNode {
-        return (
-            <textarea
-                ref={this.item}
-                value={this.props.value}
-                onChange={(event) => this.props.onChange(event, this.props.id, this.props.type)}
-                placeholder="Notes..."
-                onInput={resizeTextarea}
-                className={"item-textarea"}
-            />
-        )
-    }
-}
-
-/* Every textarea (paragraph) should
-    reize its heigh upon line addition */
-const resizeTextarea = (e: any) => {
-    /*
-        There is a bug that makes the textarea
-        the size of two lines once constructed
-        when it should only be the size of one
-
-        Therefore i constructed this workaround
-        which checks if there are any line breaks
-    */
-    if (e.currentTarget.value.indexOf("\n") === -1) {
-        e.currentTarget.style.height = "40px";
-    }else {
-        e.currentTarget.style.height = "";
-        e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
-    }
-}
