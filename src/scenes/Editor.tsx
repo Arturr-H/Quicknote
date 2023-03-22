@@ -1,9 +1,11 @@
 /* Imports */
 import React, { RefObject } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
+import { dialog } from "@tauri-apps/api";
 import EditorItem from "../molecules/EditorItem";
 import PopupMenu from "../molecules/PopupMenu";
 import { ProjectData } from "../molecules/Project";
+import { ParticleEmitter } from "../functional/Emitter";
 
 /* Enums */
 // We stringify here because that will make
@@ -35,7 +37,10 @@ interface State {
         active: boolean,
         x: number,
         y: number
-    }
+    },
+
+    is_saved: boolean,
+    particles: boolean
 }
 
 /* Types */
@@ -63,7 +68,10 @@ export default class Editor extends React.PureComponent<Props, State> {
             popup_menu: {
                 active: false,
                 x: 0, y: 0,
-            }
+            },
+
+            is_saved: true,
+            particles: false
         };
 
         /* Bindings */
@@ -81,6 +89,7 @@ export default class Editor extends React.PureComponent<Props, State> {
 
 	/* Lifecycle */
 	componentDidMount(): void {
+
         /* Popup menu follow cursor */
         document.addEventListener("contextmenu", this.show_popup);
         document.addEventListener("mousedown", this.try_hide_popup);
@@ -90,8 +99,6 @@ export default class Editor extends React.PureComponent<Props, State> {
             let data = e as ProjectData;
             this.data = data;
 
-            console.log(data);
-// ["default-snippet", { content: "Welcome!", type: ContentType.Header1 }]
             this.setState({
                 content_snippets: data.content,
                 title: data.title,
@@ -142,13 +149,15 @@ export default class Editor extends React.PureComponent<Props, State> {
             })
         });
 
+        this.setState({ is_saved: true });
+
         invoke("save_project", {
             data: JSON.stringify({
                 id: this.data?.id,
                 title: this.state.title,
                 date: this.data?.date,
                 content: end
-            })
+            }),
         });
     }
 
@@ -162,7 +171,8 @@ export default class Editor extends React.PureComponent<Props, State> {
                 } else {
                     return e;
                 }
-            })
+            }),
+            is_saved: false
         });
     }
     generateId(): string {
@@ -188,7 +198,8 @@ export default class Editor extends React.PureComponent<Props, State> {
 
         /* Insert item */
         this.setState({
-            content_snippets
+            content_snippets,
+            is_saved: false,
         }, () => {
             this.forceUpdate();
         })
@@ -202,7 +213,7 @@ export default class Editor extends React.PureComponent<Props, State> {
         return array;
     }
     setTitle = (title: string) => {
-        this.setState({ title })
+        this.setState({ title, is_saved: false })
     }
 
     /* Popup methods */
@@ -216,8 +227,37 @@ export default class Editor extends React.PureComponent<Props, State> {
     };
     deleteSnippet = (id: string) => {
         this.setState({
-            content_snippets: this.state.content_snippets.filter(e => e.id !== id)
-        })
+            content_snippets: this.state.content_snippets.filter(e => e.id !== id),
+            is_saved: false,
+        });
+        this.spawnParticles();
+    }
+
+    /* Spawn particles */
+    spawnParticles = () => {
+        this.setState({ particles: true });
+
+        setTimeout(() => {
+            this.setState({ particles: false });
+        }, 2000);
+    }
+
+    /* Go home and check if quicknote is saved */
+    go_home = () => {
+        if (!this.state.is_saved) {
+            dialog.ask("Would you like to save?",
+                { title: "Quicknote", type: "warning" }
+            ).then(sould_save => {
+                if (sould_save) {
+                    this.save_document();
+                    this.props.go_home();
+                }else {
+                    this.props.go_home();
+                }
+            });
+        }else {
+            this.props.go_home();
+        }
     }
 
 	/* Render */
@@ -261,7 +301,7 @@ export default class Editor extends React.PureComponent<Props, State> {
                         { label: "H2",          icon: "/icons/h2.svg", function: () => this.addSnippet(ContentType.Header2) },
                         { label: "H3",          icon: "/icons/h3.svg", function: () => this.addSnippet(ContentType.Header3) },
                         "break",
-                        { label: "Home", icon: "/icons/home.svg", function: this.props.go_home },
+                        { label: "Home", icon: "/icons/home.svg", function: this.go_home },
                         { label: "Save", icon: "/icons/home.svg", function: this.save_document }
                     ]}
                 />
@@ -270,6 +310,8 @@ export default class Editor extends React.PureComponent<Props, State> {
                     <div className="delete-blob" />
                     <p>Release to delete!</p>
                 </div>
+
+                { this.state.particles ? <ParticleEmitter lifetime={300} num_particles={20} /> : null }
 			</div>
 		);
 	};
@@ -300,11 +342,12 @@ function getElement(
         case ContentType.Paragraph:
             return <textarea
                 key={id}
-                style={{ height: "40px" }}
+                style={{ height: value.split("\n").length * 26.75 + "px" }}
                 value={value}
                 onChange={(event) => input_handler(event, id, type)}
                 placeholder="Notes..."
                 onInput={resizeTextarea}
+                onBlur={resizeTextarea}
                 className={"item-textarea"}
             />
 
