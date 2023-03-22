@@ -84,10 +84,7 @@ export default class Editor extends React.PureComponent<Props, State> {
 	componentDidMount(): void {
 
         /* If save */
-        document.addEventListener("keydown", (e) => {
-            if (e.metaKey && e.key == "s")
-                this.save_document();
-        })
+        document.addEventListener("keydown", this.handleKeyDown);
 
         /* Set data */
         invoke("get_project", { id: this.id }).then((e: any) => {
@@ -102,7 +99,18 @@ export default class Editor extends React.PureComponent<Props, State> {
             })
         });
     }
-	componentWillUnmount(): void {}
+	componentWillUnmount(): void {
+        document.removeEventListener("keydown", this.handleKeyDown);
+    }
+
+    handleKeyDown = (e: KeyboardEvent) => {
+        if (e.metaKey && e.key == "s")
+            this.save_document();
+        else if (e.metaKey && e.key == "r") {
+            e.preventDefault();
+            this.go_home();
+        }
+    }
 
     /* Save document */
     save_document = () => {
