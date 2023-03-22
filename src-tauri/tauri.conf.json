@@ -17,6 +17,14 @@
         "all": false,
         "open": true
       },
+      "dialog": {
+        "all": false,
+        "ask": true,
+        "confirm": false,
+        "message": false,
+        "open": false,
+        "save": false
+      },
       "window": {
         "startDragging": true
       }
