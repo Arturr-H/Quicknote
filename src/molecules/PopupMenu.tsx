@@ -3,7 +3,7 @@ import React from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 
 /* Interfaces */
-interface ButtonProps { icon: string, label: string, function: () => void }
+interface ButtonProps { icon: string, label: string, function: () => void, shortcut_label?: string }
 interface Props {
 	buttons: Array<ButtonProps | "break">
 }
@@ -45,6 +45,7 @@ export default class PopupMenu extends React.PureComponent<Props, State> {
 
 	/* Visibility handler */
 	show_popup = (e: MouseEvent) => {
+		e.preventDefault();
         this.setState({
             popup_menu: {
                 active: true,
@@ -80,6 +81,7 @@ export default class PopupMenu extends React.PureComponent<Props, State> {
 							label={button.label}
 							key={index}
 							icon={button.icon}
+							shortcut_label={button.shortcut_label}
 							function={() => {
 								button.function();
 
@@ -119,7 +121,17 @@ class Button extends React.PureComponent<ButtonProps, {}> {
 		return (
 			<div id="popup-item" className="item" onClick={this.props.function}>
                 <img id="popup-item" className="icon" src={this.props.icon} />
-                <p id="popup-item" className="label">{this.props.label}</p>
+				<div className="label-container">
+					<p id="popup-item" className="label">
+						{this.props.label}
+					</p>
+					{
+						this.props.shortcut_label &&
+						<span className="shortcut-label">
+							[{this.props.shortcut_label}]
+						</span>
+					}
+				</div>
             </div>
         );
 	};
