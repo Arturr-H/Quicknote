@@ -26,6 +26,8 @@ export class Header extends React.PureComponent<HeaderProps, {}> {
     render(): React.ReactNode {
         return (
             <input
+                data-type={this.props.type}
+                id={"selectable-" + this.props.id}
                 ref={this.item}
                 key={this.props.id}
                 value={this.props.value}

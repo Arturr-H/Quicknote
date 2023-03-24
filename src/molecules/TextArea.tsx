@@ -33,6 +33,8 @@ export class TextArea extends React.PureComponent<TextareaProps, {}> {
     render(): React.ReactNode {
         return (
             <textarea
+                data-type={this.props.type}
+                id={"selectable-" + this.props.id}
                 ref={this.item}
                 value={this.props.value}
                 onChange={(event) => this.props.onChange(event, this.props.id, this.props.type)}
@@ -55,10 +57,10 @@ const resizeTextarea = (e: any) => {
         Therefore i constructed this workaround
         which checks if there are any line breaks
     */
-    if (e.currentTarget.value.indexOf("\n") === -1) {
-        e.currentTarget.style.height = "40px";
-    }else {
+    // if (e.currentTarget.value.indexOf("\n") === -1) {
+    //     e.currentTarget.style.height = "40px";
+    // }else {
         e.currentTarget.style.height = "";
         e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
-    }
+    // }
 }
