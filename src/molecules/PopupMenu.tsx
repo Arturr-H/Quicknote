@@ -1,5 +1,5 @@
 /* Imports */
-import React from "react";
+import React, { RefObject } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 
 /* Interfaces */
@@ -17,6 +17,7 @@ interface State {
 
 /* Main */
 export default class PopupMenu extends React.PureComponent<Props, State> {
+	item: RefObject<HTMLDivElement>;
 	
 	/* Construct */
 	constructor(props: Props) {
@@ -30,6 +31,9 @@ export default class PopupMenu extends React.PureComponent<Props, State> {
 				y: 0
 			},
 		};
+
+		/* Refs */
+		this.item = React.createRef();
 	}
 
 	/* Lifecycle */
@@ -52,8 +56,18 @@ export default class PopupMenu extends React.PureComponent<Props, State> {
                 x: e.x,
                 y: e.y
             }
-        })
-        e.preventDefault();
+        }, () => {
+			/* Make sure it's not displayed out of bounds */
+			if (this.item && this.item.current !== null) {
+				let height = this.item.current.clientHeight;
+				let width = this.item.current.clientWidth;
+				if (e.y > document.body.clientHeight - height) {
+					this.item.current.style.transform += ` translateY(-${height}px)`
+				}if (e.x > document.body.clientWidth - width) {
+					this.item.current.style.transform += ` translateX(-${width}px)`
+				}
+			}
+		})
     }
     try_hide_popup = (e: MouseEvent) => {
         if ((e.target as HTMLElement).id !== "popup-item") {
@@ -73,7 +87,7 @@ export default class PopupMenu extends React.PureComponent<Props, State> {
 	render() {
 		return (
 			this.state.popup_menu.active ?
-			<div id="popup-item" className="popup-menu" style={{ left: this.state.popup_menu.x + "px", top: this.state.popup_menu.y + "px" }}>
+			<div ref={this.item} id="popup-item" className="popup-menu" style={{ left: this.state.popup_menu.x + "px", top: this.state.popup_menu.y + "px" }}>
                 {this.props.buttons.map((button, index) => {
 					if (typeof button !== "string") {
 						/* Return a button */
