@@ -18,6 +18,7 @@ use uuid;
 
 /* Constants */
 const DATA_FOLDER: &'static str = ".quicknote-data";
+const IMAGE_FOLDER: &'static str = "uploads";
 
 /* Structs */
 struct Global {
@@ -40,6 +41,29 @@ async fn save_project(data: String, global: State<'_, Global>) -> Result<(), Str
     ).ok();
 
     Ok(())
+}
+
+/* Save image (will replace if exists) */
+#[tauri::command]
+async fn save_image(image: String, id: String, global: State<'_, Global>) -> Result<String, ()> {
+
+    /* Open image */
+    let buf = match std::fs::read(&image) {
+        Ok(e) => e,
+        Err(_) => return Err(())
+    };
+
+    /* Get file ext */
+    let ext = &image.split(".").last().unwrap_or("unknown");
+    let file = global.home_dir.join(IMAGE_FOLDER).join(id + "." + ext);
+
+    /* Save */
+    std::fs::write(
+        &file,
+        buf
+    ).ok();
+
+    Ok(file.to_str().unwrap_or("").to_string())
 }
 
 /* Get all projects (listing) */
@@ -74,7 +98,6 @@ async fn get_projects(global: State<'_, Global>) -> Result<Vec<Project>, ()> {
 #[tauri::command]
 async fn get_project(id: String, global: State<'_, Global>) -> Result<Project, ()> {
     let path = global.home_dir.join(id);
-    println!("Getting project {path:?}");
 
     /* Open file */
     let buf = match std::fs::read(path) {
@@ -124,17 +147,22 @@ fn main() {
         std::fs::create_dir(&home_dir).unwrap();
     };
 
+    /* Create image folder if not exists */
+    if !Path::new(&home_dir.join(IMAGE_FOLDER)).exists() {
+        std::fs::create_dir(&home_dir.join(IMAGE_FOLDER)).unwrap();
+    }
+
     tauri::Builder::default()
 
         /* Port functions to JavaScript */
         .invoke_handler(tauri::generate_handler![
-            create_project, save_project, get_projects, get_project, delete_project
+            create_project, save_project, get_projects, get_project,
+            delete_project, save_image
         ])
 
         /* Hide titlebar */
         .setup(|app| {
             let window = app.get_window("main").unwrap();
-            window.open_devtools();
             window.set_transparent_titlebar(true, false);
             Ok(())
         })
