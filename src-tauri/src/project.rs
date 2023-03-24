@@ -30,7 +30,7 @@ impl Project {
         /* Load file */
         let buf = match std::fs::read(home_dir.join(id)) {
             Ok(e) => e,
-            Err(_) => panic!("NONONONO file")
+            Err(_) => return None
         };
 
         /* Encode file */
