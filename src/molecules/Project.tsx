@@ -85,7 +85,8 @@ export default class Project extends React.PureComponent<Props, State> {
 		this.x_start = 0;
 		this.setState({
 			x: 0,
-			dragging: false
+			dragging: false,
+			can_delete: false
 		});
 	}
 	clampMouseValue(val: number): number {
