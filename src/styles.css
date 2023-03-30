@@ -88,6 +88,7 @@ nav.navbar {
 }.project-list > .project-button-wrapper {
 	width: 100%;
 	height: 100%;
+	min-height: 11rem;
 
 	overflow: hidden;
 	border-radius: 0.5rem;
@@ -193,7 +194,9 @@ nav.navbar {
 	overscroll-behavior-x: none;
 
 	box-sizing: border-box;
-	padding: 0 1rem;
+	padding: 2rem 1rem;
+	padding-top: 0;
+	padding-bottom: 50%;
 }.editor > .editor-header {
 	width: 100%;
 	display: flex;
@@ -201,6 +204,7 @@ nav.navbar {
 		align-items: center;
 
 	padding-bottom: 1rem;
+	position: relative;
 
 }.editor > .editor-header > .editor-title {
 	font-family: "Bebas Neue", sans-serif;
@@ -300,6 +304,7 @@ nav.navbar {
 	background: none;
 	resize: none;
 	box-sizing: border-box;
+	overflow: visible;
 
 	padding-left: 0.5rem;
 	width: 100%;
@@ -415,6 +420,7 @@ nav.navbar {
 
 	cursor: pointer;
 	background: #fff;
+	animation: popup-menu-button-intro 0.1s ease-in-out forwards;
 }.popup-menu .item:hover {
 	background: #f5f5f5;
 }.popup-menu .item > .icon {
@@ -563,6 +569,73 @@ nav.navbar {
 	z-index: 3;
 }
 
+/* Music view */
+.music-view {
+	position: absolute;
+	width: 16rem;
+	height: 5rem;
+
+	right: 0;
+
+	display: inline-flex;
+	gap: 0.5rem;
+	flex-direction: row;
+
+	box-sizing: border-box;
+	padding: 0.5rem;
+	border-radius: 0.5rem;
+}.music-view > .cover-container {
+	height: 100%;
+	aspect-ratio: 1;
+	object-fit: cover;
+
+	background: #e1e1e1;
+	box-sizing: border-box;
+	padding: 0.5rem;
+
+	border-radius: 0.5rem;
+}.music-view > .cover-container > img {
+	height: 100%;
+
+	border-radius: 0.25rem;
+
+}.music-view > .actions {
+	width: 100%;
+	height: 100%;
+
+	border-radius: 0.25rem;
+	position: relative;
+
+	display: inline-flex;
+	flex-direction: column;
+	grid-area: 0.5rem;
+}.music-view > .actions > .header {
+	width: 100%;
+	height: 100%;
+
+	background: #e1e1e1;
+	border-radius: 0.5rem;
+}.music-view > .actions > .footer {
+	width: 100%;
+	height: 1rem;
+
+	display: flex;
+	align-items: flex-end;
+}.music-view > .actions > .footer > .progress-outer {
+	width: 100%;
+	height: 0.5rem;
+
+	background: #e1e1e1;
+	border-radius: 0.25rem;
+	overflow: hidden;
+}.music-view > .actions > .footer > .progress-outer > .progress-inner {
+	width: 50%;
+	height: 0.5rem;
+
+	background: #e05a60;
+	border-radius: 0.25rem;
+}
+
 /* Keyframes */
 @keyframes fade-out-border {
 	to { border-color: #00000000; border-width: 0; }
@@ -570,4 +643,8 @@ nav.navbar {
 @keyframes rotate-delete-blob {
 	from {transform: translateX(-50%) rotate(0deg);}
 	to {  transform: translateX(-50%) rotate(360deg);}
+}
+@keyframes popup-menu-button-intro {
+	from { transform: translateX(-1rem); opacity: 0; }
+	to { transform: translateX(0); opacity: 1; }
 }
