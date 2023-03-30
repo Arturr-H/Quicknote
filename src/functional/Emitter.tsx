@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { RefObject } from "react";
 
 /* Interfaces */
 interface ParticleEmitterOptions {
@@ -8,7 +8,8 @@ interface ParticleEmitterOptions {
     * Defaults to 10
     **/
     num_particles: number | undefined,
-    lifetime: number
+    lifetime: number,
+    id: string,
 }
 interface ParticleOptions {
     /**
@@ -33,6 +34,7 @@ export class ParticleEmitter extends React.PureComponent<ParticleEmitterOptions,
     /* Types */
     num_particles: number;
     lifetime: number;
+    item: RefObject<HTMLDivElement>;
 
     /* Constructor */
     constructor(props: ParticleEmitterOptions) {
@@ -48,31 +50,31 @@ export class ParticleEmitter extends React.PureComponent<ParticleEmitterOptions,
                 spread_x: 3
             }))
         };
+
+        this.item = React.createRef();
     };
 
     componentDidMount(): void {
-        let index = 0;
-
-        let particleinterval = setInterval(() => {
-            if (index > this.lifetime) {
-                clearInterval(particleinterval);
-                this.setState({ particles: [] });
-            };
-
+        this.update(0);
+    }
+    update = (index: number) => {
+        if (index < this.lifetime) {
             this.setState({
                 particles: this.state.particles.map(particle => {
                     particle.update();
                     return particle;
                 })
             });
-
-            index++;
-        }, 10);
+            
+            setTimeout(() => {
+                this.update(index + 1);
+            }, 10);
+        };
     }
 
     render() {
         return (
-            <div className="particle-container">
+            <div className="particle-container" ref={this.item} key={this.props.id} id={this.props.id}>
                 {
                     this.state.particles.map((e, index) =>
                         <div
